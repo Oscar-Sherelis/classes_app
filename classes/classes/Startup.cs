@@ -8,6 +8,10 @@ using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using classes.Providers;
+using Microsoft.EntityFrameworkCore;
+using EFDataAccessLibrary.Models;
+using classes.Models;
 
 namespace classes
 {
@@ -24,11 +28,20 @@ namespace classes
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddControllersWithViews();
+            services.AddSingleton<IDataProvider<Todo>, InMemoryTodoProvider>();
+            services.AddSingleton<IDataProvider<Category>, InMemoryCategoryProvider>();
+
+            services.AddDbContext<DataContext>(options =>
+            {
+                options.UseSqlServer(Configuration.GetConnectionString("Default"));
+            }); 
+            // services.AddSingleton<IDataProvider<Todo>, InMemoryTodoProvider>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env, DataContext db)
         {
+            db.Database.EnsureCreated();
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
@@ -50,7 +63,7 @@ namespace classes
             {
                 endpoints.MapControllerRoute(
                     name: "default",
-                    pattern: "{controller=Todo}/{action=Index}/{id?}");
+                    pattern: "{controller=Home}/{action=Index}/{id?}");
             });
         }
     }

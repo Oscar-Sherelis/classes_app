@@ -4,27 +4,33 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using classes.Models.Todo;
+using classes.Providers;
+using EFDataAccessLibrary.Models;
+using classes.Models;
 
 namespace classes.Controllers
 {
     public class TodoController : Controller
     {
-
-        private static List<Todo> TodoList = new List<Todo>
-        {
-            new Todo{Id = 1, Name = "Todo for Monday", Description = "Make breakfast"}
-        };
+        private readonly IDataProvider<Todo> dataProvider;
+        private readonly DataContext TodoContext;
         // GET: TodoController1
+
+        public TodoController(IDataProvider<Todo> dataProvider, DataContext context)
+        {
+            this.dataProvider = dataProvider;
+            this.TodoContext = context;
+        }
         public ActionResult Index()
         {
-            return View(TodoList);
+            var MyTodos = TodoContext.Todos;
+            return View(MyTodos);
         }
 
         // GET: TodoController1/Details/5
         public ActionResult Details(int id)
         {
-            return View(TodoList.FirstOrDefault(todo => todo.Id == id));
+            return View(dataProvider.Get(id));
         }
 
         // GET: TodoController1/Create
@@ -41,7 +47,7 @@ namespace classes.Controllers
 
             try
             {
-                TodoList.Add(todo);
+                dataProvider.Add(todo);
                 return RedirectToAction(nameof(Index));
             }
             catch
@@ -53,7 +59,7 @@ namespace classes.Controllers
         // GET: TodoController1/Edit/5
         public ActionResult Edit(int id)
         {
-            return View(TodoList.FirstOrDefault(todo => todo.Id == id));
+            return View(dataProvider.Get(id));
         }
 
         // POST: TodoController1/Edit/5
@@ -63,8 +69,7 @@ namespace classes.Controllers
         {
             try
             {
-                TodoList.RemoveAll(t => t.Id == id);
-                TodoList.Add(todo);
+                dataProvider.Update(todo);
                 return RedirectToAction(nameof(Index));
             }
             catch
@@ -76,7 +81,7 @@ namespace classes.Controllers
         // GET: TodoController1/Delete/5
         public ActionResult Delete(int id, Todo todo)
         {
-            return View(TodoList.FirstOrDefault(todo => todo.Id == id));
+            return View(dataProvider.Get(id));
         }
 
         // POST: TodoController1/Delete/5
@@ -86,7 +91,7 @@ namespace classes.Controllers
         {
             try
             {
-                TodoList.RemoveAll(t => t.Id == id);
+                dataProvider.Remove(id);
                 return RedirectToAction(nameof(Index));
             }
             catch
